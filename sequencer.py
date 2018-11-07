@@ -83,7 +83,7 @@ def contigs(hubs, graph):
 
 def main():
     k = 25
-    with open('./fasta/example.data.fasta') as f:
+    with open('./fasta/synthetic.noerror.small.fasta') as f:
         reads = []
         for i, line in enumerate(f.readlines()):
             if i % 2 == 1:
@@ -91,6 +91,15 @@ def main():
         dna = []
         for read in reads:
             dna += [read[i:i+k] for i in range(len(read) - k + 1)]
+        for i, kmers in enumerate(dna):
+            for kmer in kmers:
+                count = 0
+                for j, _ in enumerate(dna):
+                    if i != j and kmer in dna[j]:
+                        count += 1
+                if count < len(dna) * 0.5:
+                    kmers.remove(kmer)
+
         graph = debruijn(dna)
         hubs = get_hub_node(graph)
         contig = contigs(hubs, graph)
