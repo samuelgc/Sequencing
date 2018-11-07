@@ -18,7 +18,8 @@ def debruijn(dna):
     for seq in dna:
         suffix = seq[:-1]
         prefix = seq[1:]
-        result[suffix].append(prefix)
+        if prefix not in result[suffix]:
+            result[suffix].append(prefix)
     return result
 
 
@@ -81,7 +82,7 @@ def contigs(hubs, graph):
 
 
 def main():
-    k = 5
+    k = 25
     with open('./fasta/example.data.fasta') as f:
         reads = []
         for i, line in enumerate(f.readlines()):
