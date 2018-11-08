@@ -7,8 +7,8 @@ Sequencing
 3. maybe do something fancy to deal with errors in the reads
 
 """
-
-# All the data segments are divisible by 5 so probably use kmer of size 5
+import sys
+sys.setrecursionlimit(3200)
 
 def debruijn(dna):
     result = {}
@@ -83,7 +83,7 @@ def contigs(hubs, graph):
 
 def main():
     k = 25
-    with open('./fasta/synthetic.noerror.small.fasta') as f:
+    with open('./fasta/real.error.small.fasta') as f:
         reads = []
         for i, line in enumerate(f.readlines()):
             if i % 2 == 1:
@@ -91,24 +91,38 @@ def main():
         dna = []
         for read in reads:
             dna += [read[i:i+k] for i in range(len(read) - k + 1)]
-        for i, kmers in enumerate(dna):
-            for kmer in kmers:
-                count = 0
-                for j, _ in enumerate(dna):
-                    if i != j and kmer in dna[j]:
-                        count += 1
-                if count < len(dna) * 0.5:
-                    kmers.remove(kmer)
+        for kmer in dna:
+            if dna.count(kmer) < 5:  #  len(dna) * 0.5:
+                dna.remove(kmer)
 
         graph = debruijn(dna)
         hubs = get_hub_node(graph)
         contig = contigs(hubs, graph)
-        contig.sort()
+        contig.sort(key=len)
+
+        # Average Contig Length
+        total = 0
+        for line in contig:
+            total += len(line)
+        n50 = total / 2
+        total /= len(contig)
+
+        # N50 score
+        n50_score = 0
+        for line in contig:
+            if n50 > 0:
+                n50 -= len(line)
+                n50_score = len(line)
+
 
         start = get_start_node(graph)
         path = euler_path(start, graph, [])
 
-    with open('./result/result.txt', 'w+') as f:
+    with open('./result/result_small_error_5.txt', 'w+') as f:
+        f.write("{} Contigs\n".format(len(contig)))
+        f.write("Longest Contig: {} bps\n".format(len(contig[-1])))
+        f.write("Average Contig: {} bps\n".format(total))
+        f.write("N50 score: {}\n".format(n50_score))
         f.write(' '.join(contig))
         f.write('\n')
         for i, seq in enumerate(path):
