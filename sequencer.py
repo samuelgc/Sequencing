@@ -83,7 +83,7 @@ def contigs(hubs, graph):
 
 def main():
     k = 25
-    with open('./fasta/real.error.small.fasta') as f:
+    with open('./fasta/real.error.large.fasta') as f:
         reads = []
         for i, line in enumerate(f.readlines()):
             if i % 2 == 1:
@@ -91,14 +91,18 @@ def main():
         dna = []
         for read in reads:
             dna += [read[i:i+k] for i in range(len(read) - k + 1)]
+        print("Finished reading in data")
+
         for kmer in dna:
-            if dna.count(kmer) < 5:  #  len(dna) * 0.5:
+            if dna.count(kmer) <= 2:
                 dna.remove(kmer)
+        print("Done removing errors")
 
         graph = debruijn(dna)
         hubs = get_hub_node(graph)
         contig = contigs(hubs, graph)
         contig.sort(key=len)
+        print("Contigs generated")
 
         # Average Contig Length
         total = 0
@@ -115,16 +119,19 @@ def main():
                 n50_score = len(line)
 
 
-        start = get_start_node(graph)
+        start = contig[-1][:k-1] #get_start_node(graph)
         path = euler_path(start, graph, [])
+        print("Path generated")
 
-    with open('./result/result_small_error_5.txt', 'w+') as f:
+    with open('./result/result_large_error_2.txt', 'w+') as f:
         f.write("{} Contigs\n".format(len(contig)))
-        f.write("Longest Contig: {} bps\n".format(len(contig[-1])))
+        f.write("Longest Contig: {} bps --> {}\n".format(len(contig[-1]), contig[-1]))
         f.write("Average Contig: {} bps\n".format(total))
         f.write("N50 score: {}\n".format(n50_score))
+        f.write("Contigs:\n")
         f.write(' '.join(contig))
         f.write('\n')
+        f.write("Euler Path starting from the first node in the longest contig:\n")
         for i, seq in enumerate(path):
             if i == 0:
                 f.write(seq)
